@@ -42,7 +42,7 @@ void TInterfaceOvl::set ()
 				if (next == IS_RIGHT) smer = static_cast<Smer> (-smer);
 				break;
 		}
-		ZmenaSmeru z; z.s = smer; z.i = next;
+		ZmenaSmeru z; z.s = smer; z.i = next; z.n = nahoru;
 		zmena_smeru (this, z);
 	} 			
 }
