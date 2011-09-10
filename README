@@ -1,0 +1,95 @@
+---
+objektovy navrh herni logiky:
+---
+
+centralnim objektem je Hadovnik. v tick() vykonava jednotlive tahy: projde
+seznam hadu. u tech, kteri jsou "na tahu", se zepta jejich ovladacu metodou
+get(), kam si preji pokracovat. pak preda tento smer vyhodnocovaci.
+Vyhodnocovac zkontroluje, zda je pohyb legalni, provede wrap-around na hranici
+mapy a podobne veci (napr. obraceni ovladani po sebrani nejakeho vypeceneho
+bonusu), a pak da hadovi pokyn k presunu vyslednym smerem. pripadne, pokud by
+had na neco narazil, vyvola interakci s tou Veci.
+
+objekt Had slouzi k tomu, aby uchovaval hadovo telo a pohyboval s nim po Mape.
+navic ma Inventar, do ktereho sbira pripadne Bonusy.
+nejvyznamnejsi Bonus je FoodBonus, ktery umoznuje hadovi rust ( = nemazat si
+posledni prvek ocasu pri kazdem pohybu). pri kazdem kroku had testuje, jestli
+ma v inventari nejaky FoodBonus, a podle toho vypada jeho krok.
+
+objekt Ovladac je hadovnikem jednoznacne spojen s prave jednim Hadem. slouzi
+k abstrakci ovladani hada - umeli protivnici, vstup z klavesnice, sitovi
+protihraci, to vse jsou ruzne druhy Ovladacu. kdyz nastane cas, hadovnik
+se prislusneho ovladace zepta, kudy se ma jeho had pohnout dal.
+
+objekt Mapa krome uchovavani mapy jako obrovskeho pole ukazatelu na Veci
+dokaze najit neobsazene misto pro umisteni bonusu a neobsazeny spawnpoint
+pro noveho/znovuzrozeneho hada.
+
+Inventar je reseny jako seznam Bonusu. ty umi interagovat mezi sebou (napr.
+nektere bonusy se muzou navzajem posilovat (treba FoodBonusy se spojuji),
+jine se naopak mohou vyrusit, pripadne v kombinaci dostanou novy vyznam).
+
+Bonusovnik je na stejne urovni jako Hadovnik. stara se ale o bonusy, jejich
+umistovani do hry a odebirani ze hry.
+
+---
+uzivatelsky meziksicht:
+---
+
+trida Interface zprostredkovava komunikaci hry a uzivatele. vytvari klicove
+objekty (Hadovnik, Bonusovnik, Mapa), spousti herni tahy (jejichz takt je
+stabilne 10Hz), zobrazuje herni situaci pomoci OpenGL.
+s interfacem souvisi abstraktni trida TGLVec - vec, ktera se dokaze nakreslit.
+klicove objekty (bonusy, hadi, zdi) ve hre by mely byt potomky tehle tridy.
+dalsi vec je TInterfaceOvl - ovladac, ktery prebira vstupy z klavesnice.
+Interface prebira stisky klaves a podle klavesove mapy je posila prislusnym
+ovladacum. je tedy mozne hrat ve vice lidech na jednom pocitaci.
+
+---
+sitova vrstva:
+---
+
+implementace je znacne neuplna, takze popis neni moc presny
+trida Network , resp. jeji potomci ClientNetwork a ServerNetwork, slouzi jako
+univerzalni prostredek pristupu k siti. "sama od sebe" navaze spojeni klienta
+a serveru, spocita latenci mezi nimi a synchronizuje tak herni tahy.
+ovladac TNetworkedOvl je pro Network tim, co je TInterfaceOvl pro Interface.
+Network prijma pohyby hadu ze site a posila je prislusnym ovladacum.
+vsechny ovladace by navic mely umet v urcenem okamziku (na pozadani Interface
+nebo Network) odeslat svuj nasledujici krok do site (prostrednictvim metody
+v Network)
+
+---
+betaverze:
+---
+
+* sitova vrstva je ve stadiu pre-alpha. neni zahrnuta ve "vzorovem programu",
+protoze vpodstate nefunguje. navic nemam k dispozici aktualni verzi, na ktere
+pracuje kolegyne.
+* herni logika je z vetsi casti hotova a plne funkcni. jedina nehotova cast
+je vyhodnocovani rychlosti hada
+* Mapa je napevno vkompilovana do programu. pozdeji bude mozne nacitat
+ruzne mapy ze souboru
+* spektrum bonusu je silne omezene, jediny dostupny je FoodBonus
+* klavesovy ovladac zatim neumoznuje 3d pohyb. proto bylo generovani spawn
+pointu a bonusu upraveno tak, aby se objevovaly jen v jedne vrstve, kde na ne
+muze klavesnicovy had dosahnout
+* metody kresli() nejsou implementovany. zobrazovani hadu a bonusu se tedy deje
+dost ne-obecne pri kresleni mapy.
+
+---
+kompilace, spusteni:
+---
+
+tato verze jde zkompilovat pouze na Linuxu. mame i verzi funkcni ve windows
+(odlisnosti tkvi vesmes v tom, jak na win kompilovat s SDL a OpenGL), ale zatim
+neni pro obe platformy jednotny zdrojak.
+ke kompilaci a spusteni jsou nutne knihovny SDL. doporucuji hardwarovou 3D
+akceleraci, protoze SW renderovani knihovnou Mesa je cca o 5 vterin zpozdene
+proti aktualnimu deni (slovy, neda se pri tom hrat).
+soucasti baliku je zkompilovany soubor had, zkompilovany na i686.
+vlastni kompilace se provede prikazem make v adresari had.
+spousti se souborem had v temze adresari.
+ve vzorovem programu je aktivni jeden klavesove ovladany had (ovladani
+kurzorovymi sipkami) a jeden umely protivnik. bonusy se generuji jako v Nokia
+hadovi - novy se objevi po snedeni toho predchoziho.
